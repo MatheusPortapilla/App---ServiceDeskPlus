@@ -1,5 +1,7 @@
 import SwiftUI
 
+
+    
 struct RequestFormView: View {
     let service: ServiceItem
     
@@ -7,12 +9,13 @@ struct RequestFormView: View {
     @State private var detail: String = ""
     @State private var requestType: RequestType = .none
     @State private var item: ItemKind = .none
-    @State private var priority: Priority = .none
+    @State private var priority: TicketPriority = .none
     
     @State private var preview: Ticket?
     @State private var showPreview = false
     
     var body: some View {
+  
         Form {
             Section {
                 HStack( alignment:.top, spacing: 12) {
@@ -38,6 +41,9 @@ struct RequestFormView: View {
                 #endif
                     TextField("Descrição detalhada", text: $detail, axis: .vertical)
                         .lineLimit(3...6)
+                #if os(iOS)
+                        .textInputAutocapitalization(.sentences)
+                #endif
                 } header: {
                     HeaderLabel(title:"Ticket info", systemName: "square.and.pencil")
                 }
@@ -50,7 +56,7 @@ struct RequestFormView: View {
                         ForEach(ItemKind.allCases) { k in Text(k.label).tag(k) }
                     }
                     Picker("Priority", selection: $priority) {
-                        ForEach(Priority.allCases) { p in Text(p.label).tag(p) }
+                        ForEach(TicketPriority.allCases) { p in Text(p.label).tag(p) }
                     }
                 } header: {
                     HeaderLabel(title:"Classification", systemName: "list.bullet")
@@ -73,9 +79,9 @@ struct RequestFormView: View {
                     }
                     .disabled(title.isEmpty || detail.isEmpty || requestType == .none || item == .none)
                 }
-            .tint(.mint)
             .navigationTitle("Request: \(service.name)")
             .sheet(isPresented: $showPreview) {
+                
                 if let t = preview {
                     PreviewCard(
                         ticket: t,
@@ -97,6 +103,8 @@ struct PreviewCard: View {
     let ticket: Ticket
     let onConfirm: () -> Void
     let onEdit: () -> Void
+    
+
 
     var body: some View {
         VStack(spacing: 16) {
@@ -114,16 +122,20 @@ struct PreviewCard: View {
                 Text("Description: \(ticket.detail)")
                 Text("Type: \(ticket.requestType.label)")
                 Text("Item: \(ticket.item.label)")
-                Text("Priority: \(ticket.priority.label)")
+                Text("Priority: \(ticket.priority.label)").foregroundStyle(ticket.priority.color)
                 Text("Status: \(ticket.status.rawValue)")
-                Text("Created on: \(ticket.createdAt)")
+                Text("Created on: \(ticket.createdAt,style: .date)")
+                Text("Time: \(ticket.createdAt,style: .time)")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
                 Button("Edit") { onEdit() }
                 Spacer()
-                Button("Confirm") { onConfirm() }
+                Button {
+                    onConfirm() } label: {
+                        Label("Confirm", systemImage: "c")
+                    }
                     .buttonStyle(.borderedProminent)
             }
         }

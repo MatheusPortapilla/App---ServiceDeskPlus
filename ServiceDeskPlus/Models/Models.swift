@@ -7,16 +7,18 @@
 import Foundation
 
 
-enum Priority: Int, CaseIterable, Identifiable {
-    case low = 1,medium, higth, critical,none
+enum TicketPriority: Int, CaseIterable, Identifiable {
+    case none = 0, low = 1, medium, high, critical
+
     var id: Int { rawValue }
+
     var label: String {
         switch self {
-        case .low: "Low"
-        case .medium: "Medium"
-        case .higth: "Higth"
-        case .critical: "Crítical"
-        case .none : "None"
+        case .none:     "None"
+        case .low:      "Low"
+        case .medium:   "Medium"
+        case .high:     "High"
+        case .critical: "Critical"
         }
     }
 }
@@ -54,7 +56,7 @@ struct Ticket: Identifiable {
     var title: String
     var detail: String
     var item: ItemKind
-    var priority: Priority
+    var priority: TicketPriority
     var createdAt: Date = .now
     var status: Status = .draft
     
