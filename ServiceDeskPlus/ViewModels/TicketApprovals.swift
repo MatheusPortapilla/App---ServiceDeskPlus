@@ -1,18 +1,49 @@
 //
-//  TicketApprovalls.swift
+//  TicketApprovals.swift
 //  ServiceDeskPlus
 //
 //  Created by Matheus Henrique Portapilla on 20/09/25.
 //
 import Foundation
 import Combine
+import CoreData
 
 @MainActor
 final class TicketApprovals: ObservableObject {
     
+    private let context: NSManagedObjectContext
+    
     //1) Estado observado pela I (Somente leitura para o user)
     @Published private(set) var submitted: [Ticket] = []
     @Published private(set) var approvalQueue: [Ticket] = []
+    
+     //init para chamar o data core no loadFromStore()
+    init(context: NSManagedObjectContext){
+        self.context = context
+        loadFromStore()
+    }
+    //Mapeamento dos tickets gerados
+    private func loadFromStore() {
+        let req: NSFetchRequest<TicketRecord> = TicketRecord.fetchRequest()
+        do {
+            let rows = try context.fetch(req)
+            self.submitted = rows.map{ row in
+                Ticket(
+                    service: ServiceItem(name: row.serviceName ?? "", description: ""),
+                    requestType: RequestType(rawValue: row.requestType ?? "") ?? .request,
+                    title: row.title ?? "",
+                    detail: row.detail ?? "",
+                    item: ItemKind(rawValue: row.item ?? "") ?? .none,
+                    priority: TicketPriority(rawValue: Int(row.priority)) ?? .low,
+                    createdAt: row.createdAt ?? .now,
+                    status: Status(rawValue: row.status ?? "" ) ?? .submitted
+                   )
+            }
+            self.approvalQueue = self.submitted.filter { $0.status == .submitted}
+        } catch {
+            print("CoreData fetch error: \(error)")
+        }
+    }
     
     //2) Ação: enviar um ticket (vai para historico de entra em fila)
     func submit(_ ticket: Ticket) {

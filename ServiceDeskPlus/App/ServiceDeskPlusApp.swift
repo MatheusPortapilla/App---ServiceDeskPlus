@@ -10,12 +10,18 @@ import CoreData
 
 @main
 struct ServiceDeskPlusApp: App {
-    let persistenceController = PersistenceController.shared
+    private let persistenceController = PersistenceController.shared
+    @StateObject private var approvals: TicketApprovals
+    init() {
+        let ctx = persistenceController.container.viewContext
+        _approvals = StateObject(wrappedValue: TicketApprovals(context: ctx))
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(approvals)
         }
     }
 }

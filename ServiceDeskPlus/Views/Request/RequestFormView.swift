@@ -1,10 +1,11 @@
+
 import SwiftUI
 
 
-    
 struct RequestFormView: View {
     let service: ServiceItem
-    
+    @EnvironmentObject private var approvals: TicketApprovals
+
     @State private var title: String = ""
     @State private var detail: String = ""
     @State private var requestType: RequestType = .none
@@ -85,7 +86,9 @@ struct RequestFormView: View {
                 if let t = preview {
                     PreviewCard(
                         ticket: t,
-                        onConfirm: { showPreview = false },   // depois ligamos no TicketStore
+                        onConfirm: {
+                            if let t = preview {approvals.submit(t)} //Conexao do ticket approval
+                                showPreview = false },
                         onEdit:    { showPreview = false }
                     )
                 #if os(iOS)
