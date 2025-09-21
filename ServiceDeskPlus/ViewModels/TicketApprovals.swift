@@ -9,6 +9,7 @@ import Combine
 import CoreData
 
 @MainActor
+
 final class TicketApprovals: ObservableObject {
     
     private let context: NSManagedObjectContext
@@ -22,6 +23,7 @@ final class TicketApprovals: ObservableObject {
         self.context = context
         loadFromStore()
     }
+    
     //Mapeamento dos tickets gerados
     private func loadFromStore() {
         let req: NSFetchRequest<TicketRecord> = TicketRecord.fetchRequest()
@@ -86,6 +88,9 @@ final class TicketApprovals: ObservableObject {
         } catch {
             print("CoreData save error (submit): \(error)")
         }
+    }
+    func refresh() async -> Void {
+        loadFromStore()
     }
     
 }//end final class
