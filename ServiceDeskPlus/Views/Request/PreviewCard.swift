@@ -26,6 +26,12 @@ struct PreviewCard: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Title: \(ticket.title)")
+                Text("ID: \(ticket.id.uuidString)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 Text("Description: \(ticket.detail)")
                 Text("Type: \(ticket.requestType.label)")
                 Text("Item: \(ticket.item.label)")
@@ -41,7 +47,7 @@ struct PreviewCard: View {
                 Spacer()
                 Button {
                     onConfirm() } label: {
-                        Label("Confirm", systemImage: "c")
+                        Label("Confirm", systemImage: "checkmark.circle.fill")
                     }
                     .buttonStyle(.borderedProminent)
             }

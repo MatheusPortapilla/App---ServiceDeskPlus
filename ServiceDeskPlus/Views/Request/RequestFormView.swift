@@ -1,10 +1,10 @@
 
 import SwiftUI
 
-
 struct RequestFormView: View {
     let service: ServiceItem
     @EnvironmentObject private var approvals: TicketApprovals
+    @Environment(\.dismiss) private var dismiss
 
     @State private var title: String = ""
     @State private var detail: String = ""
@@ -68,17 +68,20 @@ struct RequestFormView: View {
                         preview = Ticket(
                             service: service,
                             requestType: requestType,
-                            title: title,
-                            detail: detail,
+                            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                            detail: detail.trimmingCharacters(in: .whitespacesAndNewlines),
                             item: item,
                             priority: priority,
-                            createdAt: Date()
+                            createdAt: Date(),
+                            status: .draft
                         )
                         showPreview = true
                     } label: {
                         Label("Send request", systemImage: "paperplane.fill")
                     }
-                    .disabled(title.isEmpty || detail.isEmpty || requestType == .none || item == .none)
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                              || detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                              || requestType == .none || item == .none)
                 }
             .navigationTitle("Request: \(service.name)")
             .sheet(isPresented: $showPreview) {
@@ -88,7 +91,9 @@ struct RequestFormView: View {
                         ticket: t,
                         onConfirm: {
                             if let t = preview {approvals.submit(t)} //Conexao do ticket approval
-                                showPreview = false },
+                            showPreview = false
+                            dismiss()
+                        },
                         onEdit:    { showPreview = false }
                     )
                 #if os(iOS)

@@ -50,15 +50,41 @@ struct ServiceItem: Identifiable, Hashable {
 }
 
 struct Ticket: Identifiable {
-    let id = UUID()
+    // use **uma** chave só: id (minúsculo)
+    let id: UUID
+
     var service: ServiceItem
     var requestType: RequestType
     var title: String
     var detail: String
     var item: ItemKind
     var priority: TicketPriority
-    var createdAt: Date = .now
-    var status: Status = .draft
+    var createdAt: Date
+    var status: Status
     
+    // UM init que cobre os dois cenários:
+    // - criação pela UI: não passa `id` => usa UUID()
+    // - mapeamento do Core Data: passa `id: row.id`
+    init(
+        id: UUID = UUID(),
+        service: ServiceItem,
+        requestType: RequestType,
+        title: String,
+        detail: String,
+        item: ItemKind,
+        priority: TicketPriority,
+        createdAt: Date = .now,
+        status: Status = .draft
+    ) {
+        self.id = id
+        self.service = service
+        self.requestType = requestType
+        self.title = title
+        self.detail = detail
+        self.item = item
+        self.priority = priority
+        self.createdAt = createdAt
+        self.status = status
+    }
 }
 

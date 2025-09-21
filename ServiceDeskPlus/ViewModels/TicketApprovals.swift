@@ -13,7 +13,7 @@ final class TicketApprovals: ObservableObject {
     
     private let context: NSManagedObjectContext
     
-    //1) Estado observado pela I (Somente leitura para o user)
+    //1) Estado observado pela UI (Somente leitura para o user)
     @Published private(set) var submitted: [Ticket] = []
     @Published private(set) var approvalQueue: [Ticket] = []
     
@@ -25,10 +25,12 @@ final class TicketApprovals: ObservableObject {
     //Mapeamento dos tickets gerados
     private func loadFromStore() {
         let req: NSFetchRequest<TicketRecord> = TicketRecord.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
         do {
             let rows = try context.fetch(req)
             self.submitted = rows.map{ row in
                 Ticket(
+                    id: row.id ?? UUID(),
                     service: ServiceItem(name: row.serviceName ?? "", description: ""),
                     requestType: RequestType(rawValue: row.requestType ?? "") ?? .request,
                     title: row.title ?? "",
@@ -47,24 +49,42 @@ final class TicketApprovals: ObservableObject {
     
     //2) Ação: enviar um ticket (vai para historico de entra em fila)
     func submit(_ ticket: Ticket) {
-        var t = ticket
-        t.status = .submitted    //chamado enviado
-        submitted.append(t)    //historico
-        approvalQueue.append(t)  //fila de aprovação
+        let e = TicketRecord(context: context)
+        e.id = ticket.id
+        e.title = ticket.title
+        e.detail = ticket.detail
+        e.requestType = ticket.requestType.rawValue
+        e.item = ticket.item.rawValue
+        e.serviceName = ticket.service.name
+        e.priority = Int16(ticket.priority.rawValue)
+        e.createdAt = ticket.createdAt
+        e.status = Status.submitted.rawValue
+        
+        do {
+            try context.save()
+            loadFromStore()
+        } catch {
+            print("CoreData save error (submit): \(error)")
+        }
     }
-    
     //3) Ações de aprovar ou rejeitar o ticket
-    func approve(_ id: UUID) { update(id) { $0.status = .approved} }
-    func reject(_ id :UUID) { update(id) { $0.status = .rejected} }
+    func approve(_ id: UUID) { updateStatus(id, to : .approved) }
+    func reject(_ id :UUID) { updateStatus(id, to : .rejected) }
     
      //4) Interno Aplica a atualização na lista
-    private func update(_ id: UUID, _ mutate: (inout Ticket) -> Void) {
-        if let i = submitted.firstIndex(where: { $0.id == id }) {
-            mutate(&submitted[i]) //pega o id do ticket gerado
-        }
-        if let j = approvalQueue.firstIndex(where: {$0.id == id}) {
-            mutate(&approvalQueue[j]) //atualiza na fila
-            approvalQueue.remove(at: j) //remove o ticket novo da fila apos atualizar
+    private func updateStatus(_ id: UUID, to newStatus: Status) {
+        let req:NSFetchRequest<TicketRecord> = TicketRecord.fetchRequest()
+        req.fetchLimit = 1
+        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        do {
+            if let record = try context.fetch(req).first {
+                record.status = newStatus.rawValue
+                try context.save()
+                loadFromStore()
+            }
+        } catch {
+            print("CoreData save error (submit): \(error)")
         }
     }
     

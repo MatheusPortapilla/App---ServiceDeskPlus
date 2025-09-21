@@ -10,6 +10,7 @@ import CoreData
 
 @main
 struct ServiceDeskPlusApp: App {
+    
     private let persistenceController = PersistenceController.shared
     @StateObject private var approvals: TicketApprovals
     init() {
